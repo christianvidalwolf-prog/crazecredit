@@ -43,7 +43,7 @@ function updateKPIs(filteredData = DASHBOARD_DATA.customers) {
 }
 
 function formatCurrency(val) {
-    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(val);
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(val);
 }
 
 function showModule(mod) {
@@ -95,18 +95,18 @@ function renderGeneralModule(data) {
         <div class="module-grid">
             <div class="table-card">
                 <div class="table-header">
-                    <h3>Alertas Críticas de Riesgo</h3>
-                    <span class="badge badge-danger">${data.filter(c => c['Overdue Balance (LCY)'] > 10000).length} Casos</span>
+                    <h3>Critical Risk Alerts</h3>
+                    <span class="badge badge-danger">${data.filter(c => c['Overdue Balance (LCY)'] > 10000).length} Cases</span>
                 </div>
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
-                                <th>CLIENTE</th>
+                                <th>CUSTOMER</th>
                                 <th>BALANCE</th>
-                                <th>VENCIDO</th>
-                                <th>COMERCIAL</th>
-                                <th>ESTADO</th>
+                                <th>OVERDUE</th>
+                                <th>MANAGER</th>
+                                <th>STATUS</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -116,7 +116,7 @@ function renderGeneralModule(data) {
                                     <td>${formatCurrency(c['Balance (LCY)'])}</td>
                                     <td class="text-danger">${formatCurrency(c['Overdue Balance (LCY)'])}</td>
                                     <td>${c['Responsibility Center'] || '-'}</td>
-                                    <td><span class="badge ${c['Overdue Balance (LCY)'] > 5000 ? 'badge-danger' : 'badge-warning'}">Riesgo</span></td>
+                                    <td><span class="badge ${c['Overdue Balance (LCY)'] > 5000 ? 'badge-danger' : 'badge-warning'}">Risk</span></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -131,40 +131,40 @@ function renderLimitsModule(data) {
     const today = new Date('2026-04-21');
     const renewals = data.filter(c => c['End date']).sort((a,b) => new Date(a['End date']) - new Date(b['End date']));
     
-    // Propuestas: Balance > 80% Agreed
+    // Proposals: Balance > 80% Agreed
     const proposals = data.filter(c => c['Amount agreed'] > 0 && (c['Balance (LCY)'] / c['Amount agreed']) > 0.8);
 
     return `
         <div class="module-grid">
             <div class="table-card" style="grid-column: span 1;">
-                <div class="table-header"><h3>Alertas de Renovación</h3></div>
+                <div class="table-header"><h3>Renewal Alerts</h3></div>
                 <div class="table-container" style="padding: 1rem;">
                     ${renewals.slice(0, 8).map(c => `
                         <div class="alert-item ${new Date(c['End date']) < today ? 'critical' : 'warning'}">
                             <div>
                                 <strong>${c.Name}</strong><br>
-                                <small>Vence: ${c['End date']}</small>
+                                <small>Expiry: ${c['End date']}</small>
                             </div>
                             <span class="badge ${new Date(c['End date']) < today ? 'badge-danger' : 'badge-warning'}">
-                                ${new Date(c['End date']) < today ? 'Vencido' : 'Próximo'}
+                                ${new Date(c['End date']) < today ? 'Expired' : 'Upcoming'}
                             </span>
                         </div>
                     `).join('')}
                 </div>
             </div>
             <div class="table-card" style="grid-column: span 1;">
-                <div class="table-header"><h3>Propuestas de Ampliación (>80% uso)</h3></div>
+                <div class="table-header"><h3>Expansion Proposals (>80% usage)</h3></div>
                 <div class="table-container">
                     <table>
                         <thead>
-                            <tr><th>CLIENTE</th><th>USO %</th><th>ACCIÓN</th></tr>
+                            <tr><th>CUSTOMER</th><th>USAGE %</th><th>ACTION</th></tr>
                         </thead>
                         <tbody>
                             ${proposals.map(c => `
                                 <tr>
                                     <td>${c.Name}</td>
                                     <td class="text-warning">${Math.round((c['Balance (LCY)'] / c['Amount agreed']) * 100)}%</td>
-                                    <td><button style="background:var(--primary); border:none; color:white; padding:4px 8px; border-radius:4px; font-size:10px;">REVISAR</button></td>
+                                    <td><button style="background:var(--primary); border:none; color:white; padding:4px 8px; border-radius:4px; font-size:10px;">REVIEW</button></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -185,11 +185,11 @@ function renderRiskModule(data) {
     return `
         <div class="module-grid">
             <div class="table-card">
-                <div class="table-header"><h3>Auditoría BC vs RISK Portfolio (Discrepancias)</h3></div>
+                <div class="table-header"><h3>Internal Limit vs Risk Portfolio Audit</h3></div>
                 <div class="table-container">
                     <table>
                         <thead>
-                            <tr><th>CLIENTE</th><th>LÍMITE BC</th><th>ASEGURADO</th><th>DIFERENCIA</th></tr>
+                            <tr><th>CUSTOMER</th><th>BC LIMIT</th><th>SECURED</th><th>DIFFERENCE</th></tr>
                         </thead>
                         <tbody>
                             ${discrepancies.slice(0, 10).map(c => `
@@ -205,11 +205,11 @@ function renderRiskModule(data) {
                 </div>
             </div>
             <div class="table-card">
-                <div class="table-header"><h3>Riesgo Directo (Sin Seguro / No Markant)</h3></div>
+                <div class="table-header"><h3>Direct Risk (Unsecured / Non-Markant)</h3></div>
                 <div class="table-container">
                     <table>
                         <thead>
-                            <tr><th>CLIENTE</th><th>BALANCE</th><th>PAGO</th><th>RIESGO</th></tr>
+                            <tr><th>CUSTOMER</th><th>BALANCE</th><th>PAYMENT</th><th>RISK</th></tr>
                         </thead>
                         <tbody>
                             ${directRisk.slice(0, 10).map(c => `
@@ -217,7 +217,7 @@ function renderRiskModule(data) {
                                     <td>${c.Name}</td>
                                     <td>${formatCurrency(c['Balance (LCY)'])}</td>
                                     <td>${c.Zahlungsformcode}</td>
-                                    <td><span class="badge badge-danger">Crítico</span></td>
+                                    <td><span class="badge badge-danger">Critical</span></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -225,19 +225,19 @@ function renderRiskModule(data) {
                 </div>
             </div>
             <div class="table-card">
-                <div class="table-header"><h3>Créditos sin Uso (Nuevos Clientes)</h3></div>
+                <div class="table-header"><h3>Unused Credits (New Customers)</h3></div>
                 <div class="table-container">
                     <table>
                         <thead>
-                            <tr><th>CLIENTE</th><th>LÍMITE ACORDADO</th><th>FACTURACIÓN</th><th>ESTADO</th></tr>
+                            <tr><th>CUSTOMER</th><th>AGREED LIMIT</th><th>BILLING</th><th>STATUS</th></tr>
                         </thead>
                         <tbody>
                             ${data.filter(c => c['Amount agreed'] > 0 && c['billing_count'] === 0).slice(0, 10).map(c => `
                                 <tr>
                                     <td>${c.Name}</td>
                                     <td>${formatCurrency(c['Amount agreed'])}</td>
-                                    <td>Sin registros</td>
-                                    <td><span class="badge badge-warning">Sin Uso</span></td>
+                                    <td>No records</td>
+                                    <td><span class="badge badge-warning">Unused</span></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -252,7 +252,7 @@ function renderCommercialModule(data) {
     // Group by Commercial
     const stats = {};
     data.forEach(c => {
-        const rc = c['Responsibility Center'] || 'Sin Asignar';
+        const rc = c['Responsibility Center'] || 'Unassigned';
         if (!stats[rc]) stats[rc] = { balance: 0, overdue: 0, count: 0 };
         stats[rc].balance += (c['Balance (LCY)'] || 0);
         stats[rc].overdue += (c['Overdue Balance (LCY)'] || 0);
@@ -267,11 +267,11 @@ function renderCommercialModule(data) {
     return `
         <div class="module-grid">
             <div class="table-card">
-                <div class="table-header"><h3>Riesgo por Comercial</h3></div>
+                <div class="table-header"><h3>Risk by Sales Manager</h3></div>
                 <div class="table-container">
                     <table>
                         <thead>
-                            <tr><th>COMERCIAL</th><th>CLIENTES</th><th>BALANCE TOTAL</th><th>DEUDA VENCIDA</th></tr>
+                            <tr><th>MANAGER</th><th>CUSTOMERS</th><th>TOTAL BALANCE</th><th>OVERDUE DEBT</th></tr>
                         </thead>
                         <tbody>
                             ${Object.entries(stats).map(([name, s]) => `
@@ -287,11 +287,11 @@ function renderCommercialModule(data) {
                 </div>
             </div>
             <div class="table-card">
-                <div class="table-header"><h3>Gestión de Cobros (Facturas Vencidas)</h3></div>
+                <div class="table-header"><h3>Debt Collection (Overdue Invoices)</h3></div>
                 <div class="table-container">
                     <table>
                         <thead>
-                            <tr><th>CLIENTE</th><th>FACTURA</th><th>VENCIMIENTO</th><th>DÍAS</th><th>IMPORTE</th></tr>
+                            <tr><th>CUSTOMER</th><th>INVOICE</th><th>DUE DATE</th><th>DAYS</th><th>AMOUNT</th></tr>
                         </thead>
                         <tbody>
                             ${overdueBills.slice(0, 15).map(inv => `

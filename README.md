@@ -1,45 +1,45 @@
 # Craze Credit - Financial & Risk Dashboard
 
-Este proyecto es una aplicación experta de gestión financiera y de riesgos diseñada para consolidar datos de múltiples fuentes de ERP (Business Central / Navision) y proveedores de riesgo (Risk Portfolio).
+This project is an expert financial and risk management application designed to consolidate data from multiple ERP sources (Business Central / Navision) and risk providers (Risk Portfolio).
 
-## 🚀 Características
+## 🚀 Features
 
-- **Diseño Premium**: Interfaz moderna en modo oscuro inspirada en "DEbt Hunter".
-- **Consolidación Automática**: Script de procesamiento que cruza datos de Clientes, Movimientos, Cartera de Riesgo y Límites.
-- **Módulos de Negocio**:
-    - **Gestión de Límites**: Alertas de renovaciones próximas y propuestas de ampliación.
-    - **Control de Riesgo**: Auditoría de discrepancias entre el sistema interno y el seguro de crédito.
-    - **Análisis Comercial**: Visión de riesgo por comercial y panel de gestión de cobros.
+- **Premium Design**: Modern dark-mode interface inspired by "DEbt Hunter".
+- **Automated Consolidation**: Processing script that joins Customer, Ledger Entries, Risk Portfolio, and Internal Limit data.
+- **Business Modules**:
+    - **Limit Management**: Renewal alerts and expansion proposals based on usage.
+    - **Risk Control**: Audit discrepancies between internal systems and credit insurance.
+    - **Commercial Analytics**: Risk overview by sales manager and debt collection panels.
 
-## 🛠️ Estructura del Proyecto
+## 🛠️ Project Structure
 
 ```text
-├── Customers (2).xlsx         # Datos maestros de clientes
-├── Customer Ledger... .xlsx   # Movimientos de diario (facturas)
-├── RISK_PORTFOLIO... .xlsx    # Coberturas de riesgo externo
-├── Default... .xlsx           # Límites en el sistema interno (BC)
-├── process_data.py            # Script de procesamiento (Python)
-├── data.js                    # Datos procesados para el frontend
-├── index.html                 # Interfaz de usuario principal
-├── style.css                  # Estilos del dashboard
-└── app.js                     # Lógica de la aplicación frontend
+├── Customers (2).xlsx         # Customer master data
+├── Customer Ledger... .xlsx   # Ledger entries (invoices)
+├── RISK_PORTFOLIO... .xlsx    # External risk coverage
+├── Default... .xlsx           # Internal system limits (BC)
+├── process_data.py            # Data processing script (Python)
+├── data.js                    # Processed data for the frontend
+├── index.html                 # Main UI entry point
+├── style.css                  # Dashboard styles
+└── app.js                     # Frontend application logic
 ```
 
-## 📋 Requisitos
+## 📋 Requirements
 
 - Python 3.9+
-- Librería `pandas` y `openpyxl` para el procesamiento inicial.
+- `pandas` and `openpyxl` libraries for initial processing.
 
-## 🖥️ Cómo empezar
+## 🖥️ Getting Started
 
-1. **Procesar los Datos**:
-   Si actualizas los archivos Excel, ejecuta el script para regenerar la base de datos del dashboard:
+1. **Process the Data**:
+   If you update the Excel files, run the script to regenerate the dashboard database:
    ```bash
    python3 process_data.py
    ```
 
-2. **Visualizar el Dashboard**:
-   Simplemente abre el archivo `index.html` en cualquier navegador moderno.
+2. **View the Dashboard**:
+   Simply open the `index.html` file in any modern web browser.
 
-## ✒️ Autor
-Proyecto desarrollado por **Christian Vidal Wolf**.
+## ✒️ Author
+Project developed by **Christian Vidal Wolf**.
