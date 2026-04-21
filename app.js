@@ -93,7 +93,6 @@ function hasActiveFilter(column) {
 }
 
 function renderFilterDropdownHTML(column, allValues, hasSearch) {
-    const isActive = hasActiveFilter(column);
     const options = allValues.filter(v => {
         if (!columnFilters[column].search) return true;
         return v.toLowerCase().includes(columnFilters[column].search);
@@ -119,18 +118,10 @@ function renderFilterDropdownHTML(column, allValues, hasSearch) {
         </div>
     ` : '';
 
-    const checkboxHTML = !hasSearch && options.length > 1 ? `
-        <div class="filter-actions">
-            <button onclick="toggleSelectAll('${column}', ${JSON.stringify(allValues)})">
-                ${allSelected ? 'Deselect All' : 'Select All'}
-            </button>
-        </div>
-    ` : '';
-
     return `
-        <div class="filter-dropdown ${isActive ? 'open' : ''}" id="filter-dd-${column}">
+        <div class="filter-dropdown" id="filter-dd-${column}">
             ${searchHTML}
-            ${checkboxHTML}
+            ${selectAllBtn}
             <div class="filter-options">
                 ${options.map(v => `
                     <label class="filter-option">
