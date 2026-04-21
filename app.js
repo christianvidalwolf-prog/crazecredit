@@ -5,13 +5,196 @@ let selectedSalesperson = 'all';
 let mgmtState = JSON.parse(localStorage.getItem('craze_mgmt') || '{}');
 // Expanded rows for invoice detail dropdowns
 let expandedRows = new Set();
+let expandedManager = null;
+// Column filters state
+let columnFilters = {
+    customer: { search: '', values: new Set() },
+    balance: { search: '', values: new Set() },
+    real_overdue: { search: '', values: new Set() },
+    payment_method: { search: '', values: new Set() },
+    salesperson: { search: '', values: new Set() },
+    invoices: { values: new Set() }
+};
+let activeFilterDropdown = null;
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     populateSalespersonFilter();
     updateKPIs();
     renderModule();
+    document.addEventListener('click', closeFilterDropdowns);
 });
+
+// ─── Column Filters ─────────────────────────────────────────────────────────────
+function closeFilterDropdowns(e) {
+    if (activeFilterDropdown && !e.target.closest('.filter-dropdown') && !e.target.closest('.filter-header')) {
+        const dd = document.querySelector('.filter-dropdown.open');
+        if (dd) dd.classList.remove('open');
+        document.querySelectorAll('.filter-header').forEach(h => h.classList.remove('active'));
+        activeFilterDropdown = null;
+    }
+}
+
+function toggleFilterDropdown(column, headerEl) {
+    const dropdown = headerEl.querySelector('.filter-dropdown');
+    if (activeFilterDropdown === column && dropdown.classList.contains('open')) {
+        dropdown.classList.remove('open');
+        headerEl.classList.remove('active');
+        activeFilterDropdown = null;
+    } else {
+        document.querySelectorAll('.filter-dropdown.open').forEach(d => d.classList.remove('open'));
+        document.querySelectorAll('.filter-header').forEach(h => h.classList.remove('active'));
+        dropdown.classList.add('open');
+        headerEl.classList.add('active');
+        activeFilterDropdown = column;
+        setTimeout(() => {
+            const input = dropdown.querySelector('.filter-search input');
+            if (input) input.focus();
+        }, 50);
+    }
+}
+
+function updateFilterSearch(column, value) {
+    columnFilters[column].search = value.toLowerCase();
+    renderModule();
+}
+
+function updateFilterCheckbox(column, value, checked) {
+    if (checked) {
+        columnFilters[column].values.add(value);
+    } else {
+        columnFilters[column].values.delete(value);
+    }
+    renderModule();
+}
+
+function toggleSelectAll(column, allValues) {
+    if (columnFilters[column].values.size === allValues.length) {
+        columnFilters[column].values.clear();
+    } else {
+        allValues.forEach(v => columnFilters[column].values.add(v));
+    }
+    renderModule();
+}
+
+function clearColumnFilter(column) {
+    columnFilters[column] = { search: '', values: new Set() };
+    renderModule();
+}
+
+function hasActiveFilter(column) {
+    if (columnFilters[column].search) return true;
+    if (columnFilters[column].values.size > 0) return true;
+    return false;
+}
+
+function renderFilterDropdownHTML(column, allValues, hasSearch) {
+    const isActive = hasActiveFilter(column);
+    const options = allValues.filter(v => {
+        if (!columnFilters[column].search) return true;
+        return v.toLowerCase().includes(columnFilters[column].search);
+    });
+    const allSelected = columnFilters[column].values.size === allValues.length;
+    const noneSelected = columnFilters[column].values.size === 0;
+
+    let searchHTML = '';
+    if (hasSearch) {
+        searchHTML = `
+            <div class="filter-search">
+                <input type="text" placeholder="Search..." value="${columnFilters[column].search}"
+                    oninput="updateFilterSearch('${column}', this.value)">
+            </div>
+        `;
+    }
+
+    const selectAllBtn = !hasSearch && options.length > 1 ? `
+        <div class="filter-actions">
+            <button onclick="toggleSelectAll('${column}', ${JSON.stringify(allValues)})">
+                ${allSelected ? 'Deselect All' : 'Select All'}
+            </button>
+        </div>
+    ` : '';
+
+    const checkboxHTML = !hasSearch && options.length > 1 ? `
+        <div class="filter-actions">
+            <button onclick="toggleSelectAll('${column}', ${JSON.stringify(allValues)})">
+                ${allSelected ? 'Deselect All' : 'Select All'}
+            </button>
+        </div>
+    ` : '';
+
+    return `
+        <div class="filter-dropdown ${isActive ? 'open' : ''}" id="filter-dd-${column}">
+            ${searchHTML}
+            ${checkboxHTML}
+            <div class="filter-options">
+                ${options.map(v => `
+                    <label class="filter-option">
+                        <input type="checkbox"
+                            ${columnFilters[column].values.has(v) ? 'checked' : ''}
+                            onchange="updateFilterCheckbox('${column}', '${v.replace(/'/g, "\\'")}', this.checked)">
+                        ${v}
+                    </label>
+                `).join('')}
+            </div>
+            <div class="filter-clear">
+                <button onclick="clearColumnFilter('${column}')">Clear Filter</button>
+            </div>
+        </div>
+    `;
+}
+
+function getUniqueValues(data, column, transform) {
+    const vals = data.map(c => {
+        if (column === 'customer') return c['Name'] || '';
+        if (column === 'balance') return c['Balance (LCY)'] || 0;
+        if (column === 'real_overdue') return c['real_overdue_amount'] || 0;
+        if (column === 'payment_method') return c['Zahlungsformcode'] || '';
+        if (column === 'salesperson') return c['Salesperson Name'] || '';
+        if (column === 'invoices') return c['overdue_invoice_count'] || 0;
+        return '';
+    });
+    if (transform === 'badge') {
+        return [...new Set(vals.filter(Boolean))].sort();
+    }
+    return [...new Set(vals)];
+}
+
+function applyColumnFilters(data) {
+    return data.filter(c => {
+        if (columnFilters.customer.search) {
+            const name = (c['Name'] || '').toLowerCase();
+            if (!name.includes(columnFilters.customer.search)) return false;
+        }
+        if (columnFilters.customer.values.size > 0) {
+            if (!columnFilters.customer.values.has(c['Name'])) return false;
+        }
+        if (columnFilters.balance.values.size > 0) {
+            const val = c['Balance (LCY)'] || 0;
+            if (!columnFilters.balance.values.has(val)) return false;
+        }
+        if (columnFilters.real_overdue.values.size > 0) {
+            const val = c['real_overdue_amount'] || 0;
+            if (!columnFilters.real_overdue.values.has(val)) return false;
+        }
+        if (columnFilters.payment_method.values.size > 0) {
+            if (!columnFilters.payment_method.values.has(c['Zahlungsformcode'])) return false;
+        }
+        if (columnFilters.salesperson.values.size > 0) {
+            if (!columnFilters.salesperson.values.has(c['Salesperson Name'])) return false;
+        }
+        if (columnFilters.invoices.values.size > 0) {
+            const val = c['overdue_invoice_count'] || 0;
+            if (!columnFilters.invoices.values.has(val)) return false;
+        }
+        return true;
+    });
+}
+
+function toggleManager(name) {
+    expandedManager = expandedManager === name ? null : name;
+    renderModule();
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatCurrency(val) {
@@ -162,6 +345,48 @@ function invoiceDetailRow(customerId, colSpan) {
     `;
 }
 
+function managerDetailRow(managerName, colSpan) {
+    const clientsOfManager = new Set(
+        DASHBOARD_DATA.customers
+            .filter(c => (c['Salesperson Name'] || 'Unassigned') === managerName)
+            .map(c => String(c['No.']))
+    );
+    const invoices = DASHBOARD_DATA.overdue_invoices.filter(
+        inv => clientsOfManager.has(String(inv['Customer No.']))
+    );
+
+    if (!invoices.length) return `<tr><td colspan="${colSpan}" class="text-muted" style="padding:1rem;text-align:center;">No overdue invoices for this manager</td></tr>`;
+
+    const rows = invoices.map(inv => `
+        <tr class="invoice-detail-row">
+            <td>${inv['Customer Name']} <small>(${inv['Customer No.']})</small></td>
+            <td>${inv['Document No.']}</td>
+            <td class="text-danger">${inv['Days Overdue']}d</td>
+            <td>${formatCurrency(inv['Remaining Amt. (LCY)'])}</td>
+            <td>${paymentBadge(inv['Payment Method Code'])}</td>
+        </tr>
+    `).join('');
+
+    return `
+        <tr class="detail-row">
+            <td colspan="${colSpan}" style="padding:0;">
+                <div class="detail-container">
+                    <h4 style="margin-bottom:1rem;font-size:0.875rem;color:var(--primary);">Grouped Invoice Detail: ${managerName}</h4>
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th>CUSTOMER</th><th>INVOICE</th><th>DAYS OVERDUE</th>
+                                <th>AMOUNT</th><th>PAYMENT</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
 // ─── Management state controls ────────────────────────────────────────────────
 function updateMgmtStatus(id, val) {
     getMgmt(id).status = val;
@@ -183,9 +408,13 @@ function updateResponse(id, val) {
 
 // ─── MODULE: General ─────────────────────────────────────────────────────────
 function renderGeneralModule(data) {
-    const critical = data.filter(c => (c['real_overdue_amount'] || 0) > 0)
+    const filteredData = applyColumnFilters(data);
+    const critical = filteredData.filter(c => (c['real_overdue_amount'] || 0) > 0)
         .sort((a, b) => (b['real_overdue_amount'] || 0) - (a['real_overdue_amount'] || 0))
         .slice(0, 20);
+
+    const allPaymentMethods = [...new Set(data.map(c => c['Zahlungsformcode'] || '').filter(Boolean))].sort();
+    const allSalespersons = [...new Set(data.map(c => c['Salesperson Name'] || '').filter(Boolean))].sort();
 
     const rows = critical.map(c => {
         const id = c['No.'];
@@ -220,8 +449,45 @@ function renderGeneralModule(data) {
                 <div class="table-container">
                     <table>
                         <thead><tr>
-                            <th>CUSTOMER</th><th>BALANCE</th><th>REAL OVERDUE ▼</th>
-                            <th>PAYMENT METHOD</th><th>SALESPERSON</th><th>INVOICES</th>
+                            <th class="filter-header" onclick="toggleFilterDropdown('customer', this.parentElement)">
+                                <div class="filter-header-cell">
+                                    CUSTOMER
+                                    <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i>
+                                </div>
+                                ${renderFilterDropdownHTML('customer', [...new Set(data.map(c => c['Name'] || '').filter(Boolean))].sort(), true)}
+                            </th>
+                            <th class="filter-header" onclick="toggleFilterDropdown('balance', this.parentElement)">
+                                <div class="filter-header-cell">
+                                    BALANCE
+                                    <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i>
+                                </div>
+                            </th>
+                            <th class="filter-header" onclick="toggleFilterDropdown('real_overdue', this.parentElement)">
+                                <div class="filter-header-cell">
+                                    REAL OVERDUE ▼
+                                    <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i>
+                                </div>
+                            </th>
+                            <th class="filter-header" onclick="toggleFilterDropdown('payment_method', this.parentElement)">
+                                <div class="filter-header-cell">
+                                    PAYMENT METHOD
+                                    <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i>
+                                </div>
+                                ${renderFilterDropdownHTML('payment_method', allPaymentMethods, false)}
+                            </th>
+                            <th class="filter-header" onclick="toggleFilterDropdown('salesperson', this.parentElement)">
+                                <div class="filter-header-cell">
+                                    SALESPERSON
+                                    <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i>
+                                </div>
+                                ${renderFilterDropdownHTML('salesperson', allSalespersons, false)}
+                            </th>
+                            <th class="filter-header" onclick="toggleFilterDropdown('invoices', this.parentElement)">
+                                <div class="filter-header-cell">
+                                    INVOICES
+                                    <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i>
+                                </div>
+                            </th>
                         </tr></thead>
                         <tbody>${rows}</tbody>
                     </table>
@@ -461,15 +727,24 @@ function renderCommercialModule(data) {
 
     const spRows = Object.entries(stats)
         .sort((a, b) => b[1].real_overdue - a[1].real_overdue)
-        .map(([name, s]) => `
-            <tr>
-                <td><strong>${name}</strong></td>
-                <td>${s.count}</td>
-                <td>${formatCurrency(s.balance)}</td>
-                <td class="text-warning">${formatCurrency(s.overdue)}</td>
-                <td class="text-danger"><strong>${formatCurrency(s.real_overdue)}</strong></td>
-            </tr>
-        `).join('');
+        .map(([name, s]) => {
+            const isExp = expandedManager === name;
+            return `
+                <tr class="expandable-row" onclick="toggleManager('${name}')">
+                    <td>
+                        <div style="display:flex;align-items:center;gap:0.5rem;">
+                             <i data-lucide="${isExp ? 'chevron-down' : 'chevron-right'}" style="width:14px;height:14px;color:var(--text-muted);"></i>
+                             <strong>${name}</strong>
+                        </div>
+                    </td>
+                    <td>${s.count}</td>
+                    <td>${formatCurrency(s.balance)}</td>
+                    <td class="text-warning">${formatCurrency(s.overdue)}</td>
+                    <td class="text-danger"><strong>${formatCurrency(s.real_overdue)}</strong></td>
+                </tr>
+                ${isExp ? managerDetailRow(name, 5) : ''}
+            `;
+        }).join('');
 
     // Top overdue clients per salesperson (drill-down)
     const topClients = data
