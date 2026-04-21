@@ -645,17 +645,14 @@ function renderLimitsModule(data) {
                     <table>
                         <thead>
                             <tr>
-                                <th class="filter-header" onclick="toggleLimitsFilterDropdown('no_end_date', 'customer', this)">
-                                    <div class="filter-header-cell">CUSTOMER <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
-                                    ${renderLimitsFilterDropdown('no_end_date', 'customer', [...new Set(withoutEndDateOriginal.map(c => c.Name || '').filter(Boolean))])}
+                                <th onclick="setLimitsSort('no_end_date', 'customer')" style="cursor:pointer;white-space:nowrap;">
+                                    CUSTOMER <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.no_end_date.column === 'customer' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : '⇅'}</span>
                                 </th>
-                                <th class="filter-header" onclick="toggleLimitsFilterDropdown('no_end_date', 'payment', this)">
-                                    <div class="filter-header-cell">PAYMENT <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
-                                    ${renderLimitsFilterDropdown('no_end_date', 'payment', allPaymentMethods)}
+                                <th onclick="setLimitsSort('no_end_date', 'payment')" style="cursor:pointer;white-space:nowrap;">
+                                    PAYMENT <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.no_end_date.column === 'payment' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : '⇅'}</span>
                                 </th>
-                                <th class="filter-header" onclick="toggleLimitsFilterDropdown('no_end_date', 'salesperson', this)">
-                                    <div class="filter-header-cell">SALESPERSON <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
-                                    ${renderLimitsFilterDropdown('no_end_date', 'salesperson', allSalespersons)}
+                                <th onclick="setLimitsSort('no_end_date', 'salesperson')" style="cursor:pointer;white-space:nowrap;">
+                                    SALESPERSON <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.no_end_date.column === 'salesperson' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : '⇅'}</span>
                                 </th>
                                 <th onclick="setLimitsSort('no_end_date', 'balance')" style="cursor:pointer;white-space:nowrap;">
                                     BALANCE <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.no_end_date.column === 'balance' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : '⇅'}</span>
@@ -688,17 +685,14 @@ function renderLimitsModule(data) {
                     <table>
                         <thead>
                             <tr>
-                                <th class="filter-header" onclick="toggleLimitsFilterDropdown('proposals', 'customer', this)">
-                                    <div class="filter-header-cell">CUSTOMER <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
-                                    ${renderLimitsFilterDropdown('proposals', 'customer', [...new Set(proposalsOriginal.map(c => c.Name || '').filter(Boolean))])}
+                                <th onclick="setLimitsSort('proposals', 'customer')" style="cursor:pointer;white-space:nowrap;">
+                                    CUSTOMER <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.proposals.column === 'customer' ? (limitsSort.proposals.desc ? '▼' : '▲') : '⇅'}</span>
                                 </th>
-                                <th class="filter-header" onclick="toggleLimitsFilterDropdown('proposals', 'payment', this)">
-                                    <div class="filter-header-cell">PAYMENT <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
-                                    ${renderLimitsFilterDropdown('proposals', 'payment', allPaymentMethods)}
+                                <th onclick="setLimitsSort('proposals', 'payment')" style="cursor:pointer;white-space:nowrap;">
+                                    PAYMENT <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.proposals.column === 'payment' ? (limitsSort.proposals.desc ? '▼' : '▲') : '⇅'}</span>
                                 </th>
-                                <th class="filter-header" onclick="toggleLimitsFilterDropdown('proposals', 'salesperson', this)">
-                                    <div class="filter-header-cell">SALESPERSON <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
-                                    ${renderLimitsFilterDropdown('proposals', 'salesperson', allSalespersons)}
+                                <th onclick="setLimitsSort('proposals', 'salesperson')" style="cursor:pointer;white-space:nowrap;">
+                                    SALESPERSON <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.proposals.column === 'salesperson' ? (limitsSort.proposals.desc ? '▼' : '▲') : '⇅'}</span>
                                 </th>
                                 <th onclick="setLimitsSort('proposals', 'usage')" style="cursor:pointer;white-space:nowrap;">
                                     USAGE % <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.proposals.column === 'usage' ? (limitsSort.proposals.desc ? '▼' : '▲') : '⇅'}</span>
