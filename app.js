@@ -492,18 +492,24 @@ function renderGeneralModule(data) {
 // ─── MODULE: Limits ───────────────────────────────────────────────────────────
 function renderLimitsModule(data) {
     const today = new Date('2026-04-21');
-    const renewals = data.filter(c => c['End date'] && c['End date'] !== 'NaT')
+    const in60 = new Date(today);
+    in60.setDate(today.getDate() + 60);
+
+    const withEndDate = data.filter(c => c['End date'] && c['End date'] !== 'NaT')
         .sort((a, b) => new Date(a['End date']) - new Date(b['End date']));
+    
+    const withoutEndDate = data.filter(c => !c['End date'] || c['End date'] === 'NaT' || c['End date'] === null);
+
     const proposals = data.filter(c => c['Amount agreed'] > 0 && (c['Balance (LCY)'] / c['Amount agreed']) > 0.8);
 
     return `
         <div class="module-grid">
             <div class="table-card" style="grid-column:span 1;">
-                <div class="table-header"><h3>Renewal Alerts</h3>
-                    <span class="badge badge-warning">${renewals.length}</span>
+                <div class="table-header"><h3>Renewal Alerts · With End Date</h3>
+                    <span class="badge badge-warning">${withEndDate.length}</span>
                 </div>
                 <div class="table-container" style="padding:1rem;">
-                    ${renewals.slice(0, 12).map(c => `
+                    ${withEndDate.length > 0 ? withEndDate.slice(0, 15).map(c => `
                         <div class="alert-item ${new Date(c['End date']) < today ? 'critical' : 'warning'}">
                             <div>
                                 <strong>${c.Name}</strong><br>
@@ -513,7 +519,29 @@ function renderLimitsModule(data) {
                                 ${new Date(c['End date']) < today ? 'Expired' : 'Upcoming'}
                             </span>
                         </div>
-                    `).join('')}
+                    `).join('') : '<div class="alert-item"><div><em style="color:var(--text-muted)">No clients with renewal dates</em></div></div>'}
+                </div>
+            </div>
+            <div class="table-card" style="grid-column:span 1;">
+                <div class="table-header">
+                    <h3>No End Date Set · Need Management</h3>
+                    <span class="badge badge-danger">${withoutEndDate.length}</span>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>CUSTOMER</th><th>PAYMENT</th><th>SALESPERSON</th><th>BALANCE</th><th>LIMIT</th></tr></thead>
+                        <tbody>
+                            ${withoutEndDate.slice(0, 20).map(c => `
+                                <tr>
+                                    <td>${c.Name}</td>
+                                    <td>${paymentBadge(c['Zahlungsformcode'])}</td>
+                                    <td>${c['Salesperson Name'] || '—'}</td>
+                                    <td>${formatCurrency(c['Balance (LCY)'] || 0)}</td>
+                                    <td>${formatCurrency(c['Amount agreed'] || 0)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
                 </div>
             </div>
             <div class="table-card" style="grid-column:span 1;">
