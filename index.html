@@ -8,7 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Lucide Icons for premium feel -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
@@ -19,25 +18,37 @@
         </div>
         <ul class="nav-menu">
             <li class="nav-item">
-                <a href="#" class="nav-link active" onclick="showModule('general')">
+                <a href="#" class="nav-link active" onclick="showModule('general', this); return false;">
                     <i data-lucide="layout-dashboard"></i>
                     Overview
                 </a>
             </li>
             <li class="nav-item">
-                <a href="#" class="nav-link" onclick="showModule('limits')">
+                <a href="#" class="nav-link" onclick="showModule('cobros', this); return false;">
+                    <i data-lucide="file-clock"></i>
+                    Collections
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showModule('limits', this); return false;">
                     <i data-lucide="shield-alert"></i>
                     Limits
                 </a>
             </li>
             <li class="nav-item">
-                <a href="#" class="nav-link" onclick="showModule('risk')">
+                <a href="#" class="nav-link" onclick="showModule('risk', this); return false;">
                     <i data-lucide="activity"></i>
                     Risk
                 </a>
             </li>
             <li class="nav-item">
-                <a href="#" class="nav-link" onclick="showModule('commercial')">
+                <a href="#" class="nav-link" onclick="showModule('creditscan', this); return false;">
+                    <i data-lucide="scan-search"></i>
+                    Credit Scanner
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showModule('commercial', this); return false;">
                     <i data-lucide="bar-chart-3"></i>
                     Analytics
                 </a>
@@ -52,9 +63,8 @@
                 <p id="current-date-display">April 21, 2026 · Live Data</p>
             </div>
             <div class="actions">
-                <!-- Commercial Filter -->
-                <select id="commercial-filter" onchange="applyFilters()" style="background: var(--bg-card); color: white; border: 1px solid var(--border); padding: 0.5rem; border-radius: 8px;">
-                    <option value="all">All Sales Managers</option>
+                <select id="commercial-filter" onchange="applyFilters()" style="background: var(--bg-card); color: white; border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.875rem;">
+                    <option value="all">All Salespersons</option>
                 </select>
             </div>
         </header>
@@ -63,12 +73,12 @@
             <div class="kpi-card">
                 <div class="kpi-label">Total Balance</div>
                 <div class="kpi-value" id="kpi-total-balance">0 €</div>
-                <div class="kpi-trend up"><i data-lucide="trending-up"></i> 8.2% vs last month</div>
+                <div class="kpi-trend up"><i data-lucide="trending-up"></i> Active portfolio</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">Overdue Balance</div>
+                <div class="kpi-label">Real Overdue</div>
                 <div class="kpi-value" id="kpi-overdue-balance">0 €</div>
-                <div class="kpi-trend down"><i data-lucide="trending-down"></i> 3.4% of total</div>
+                <div class="kpi-trend down"><i data-lucide="trending-down"></i> Excl. confirmed payments</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">Secured Credit</div>
@@ -82,16 +92,11 @@
             </div>
         </section>
 
-        <div id="dynamic-content">
-            <!-- Content will be injected here by app.js -->
-        </div>
+        <div id="dynamic-content"></div>
     </main>
 
-    <!-- Data and Application Logic -->
     <script src="data.js"></script>
     <script src="app.js"></script>
-    <script>
-        lucide.createIcons();
-    </script>
+    <script>lucide.createIcons();</script>
 </body>
 </html>
