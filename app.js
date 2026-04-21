@@ -42,6 +42,12 @@ function closeFilterDropdowns(e) {
         document.querySelectorAll('.filter-header').forEach(h => h.classList.remove('active'));
         activeFilterDropdown = null;
     }
+    if (!e.target.closest('#customer-filter-dd-no_end_date')) {
+        document.getElementById('customer-filter-dd-no_end_date')?.style?.setProperty('display', 'none');
+    }
+    if (!e.target.closest('#customer-filter-dd-proposals')) {
+        document.getElementById('customer-filter-dd-proposals')?.style?.setProperty('display', 'none');
+    }
 }
 
 function toggleFilterDropdown(column, headerEl) {
@@ -502,6 +508,7 @@ function applyLimitsFilters(data, filterKey) {
     const f = limitsFilters[filterKey];
     return data.filter(c => {
         if (f.customer && !(c.Name || '').toLowerCase().includes(f.customer)) return false;
+        if (f.customer_values && f.customer_values.size > 0 && !f.customer_values.has(c.Name)) return false;
         if (f.payment.size > 0 && !f.payment.has(c['Zahlungsformcode'])) return false;
         if (f.salesperson.size > 0 && !f.salesperson.has(c['Salesperson Name'])) return false;
         return true;
@@ -647,14 +654,23 @@ function renderLimitsModule(data) {
                             <tr>
                                 <th>
                                     <div style="display:flex;flex-direction:column;gap:2px;">
-                                        <div onclick="setLimitsSort('no_end_date', 'customer')" style="cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;">
-                                            CUSTOMER <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.no_end_date.column === 'customer' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : '⇅'}</span>
+                                        <div style="cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;">
+                                            <span onclick="setLimitsSort('no_end_date', 'customer')">CUSTOMER</span> <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.no_end_date.column === 'customer' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : '⇅'}</span>
+                                            <span onclick="event.stopPropagation(); document.getElementById('customer-filter-dd-no_end_date').style.display = document.getElementById('customer-filter-dd-no_end_date').style.display === 'block' ? 'none' : 'block';" style="cursor:pointer;margin-left:4px;">☰</span>
                                         </div>
-                                        <input type="text" placeholder="🔍 Filter..." style="background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:0.7rem;color:var(--text-main);width:100%;"
+                                        <input type="text" placeholder="🔍 Search..." style="background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:0.7rem;color:var(--text-main);width:100%;"
                                             value="${limitsFilters.no_end_date.customer || ''}"
                                             onclick="event.stopPropagation()"
                                             oninput="limitsFilters.no_end_date.customer = this.value.toLowerCase();"
                                             onkeydown="if(event.key === 'Enter') { renderModule(); }">
+                                        <div id="customer-filter-dd-no_end_date" style="display:none;position:absolute;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4);max-height:200px;overflow-y:auto;z-index:1000;min-width:200px;padding:8px;" onclick="event.stopPropagation();">
+                                            <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:4px;">Select customers:</div>
+                                            ${[...new Set(withoutEndDateOriginal.map(c => c.Name || '').filter(Boolean))].sort().slice(0,50).map(n => `
+                                                <label style="display:block;padding:2px 4px;cursor:pointer;font-size:0.75rem;">
+                                                    <input type="checkbox" ${limitsFilters.no_end_date.customer_values?.has(n) ? 'checked' : ''} onchange="if(!limitsFilters.no_end_date.customer_values) limitsFilters.no_end_date.customer_values = new Set(); this.checked ? limitsFilters.no_end_date.customer_values.add(n) : limitsFilters.no_end_date.customer_values.delete(n); renderModule();"> ${n}
+                                                </label>
+                                            `).join('')}
+                                        </div>
                                     </div>
                                 </th>
                                 <th>
@@ -716,14 +732,23 @@ function renderLimitsModule(data) {
                             <tr>
                                 <th>
                                     <div style="display:flex;flex-direction:column;gap:2px;">
-                                        <div onclick="setLimitsSort('proposals', 'customer')" style="cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;">
-                                            CUSTOMER <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.proposals.column === 'customer' ? (limitsSort.proposals.desc ? '▼' : '▲') : '⇅'}</span>
+                                        <div style="cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;">
+                                            <span onclick="setLimitsSort('proposals', 'customer')">CUSTOMER</span> <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.proposals.column === 'customer' ? (limitsSort.proposals.desc ? '▼' : '▲') : '⇅'}</span>
+                                            <span onclick="event.stopPropagation(); document.getElementById('customer-filter-dd-proposals').style.display = document.getElementById('customer-filter-dd-proposals').style.display === 'block' ? 'none' : 'block';" style="cursor:pointer;margin-left:4px;">☰</span>
                                         </div>
-                                        <input type="text" placeholder="🔍 Filter..." style="background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:0.7rem;color:var(--text-main);width:100%;"
+                                        <input type="text" placeholder="🔍 Search..." style="background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:0.7rem;color:var(--text-main);width:100%;"
                                             value="${limitsFilters.proposals.customer || ''}"
                                             onclick="event.stopPropagation()"
                                             oninput="limitsFilters.proposals.customer = this.value.toLowerCase();"
                                             onkeydown="if(event.key === 'Enter') { renderModule(); }">
+                                        <div id="customer-filter-dd-proposals" style="display:none;position:absolute;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4);max-height:200px;overflow-y:auto;z-index:1000;min-width:200px;padding:8px;" onclick="event.stopPropagation();">
+                                            <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:4px;">Select customers:</div>
+                                            ${[...new Set(proposalsOriginal.map(c => c.Name || '').filter(Boolean))].sort().map(n => `
+                                                <label style="display:block;padding:2px 4px;cursor:pointer;font-size:0.75rem;">
+                                                    <input type="checkbox" ${limitsFilters.proposals.customer_values?.has(n) ? 'checked' : ''} onchange="if(!limitsFilters.proposals.customer_values) limitsFilters.proposals.customer_values = new Set(); this.checked ? limitsFilters.proposals.customer_values.add(n) : limitsFilters.proposals.customer_values.delete(n); renderModule();"> ${n}
+                                                </label>
+                                            `).join('')}
+                                        </div>
                                     </div>
                                 </th>
                                 <th>
