@@ -657,11 +657,11 @@ function renderLimitsModule(data) {
                                     <div class="filter-header-cell">SALESPERSON <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
                                     ${renderLimitsFilterDropdown('no_end_date', 'salesperson', allSalespersons)}
                                 </th>
-                                <th class="filter-header" onclick="setLimitsSort('no_end_date', 'balance');">
-                                    <div class="filter-header-cell" style="cursor:pointer;">BALANCE ${limitsSort.no_end_date.column === 'balance' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : ''}</div>
+                                <th onclick="setLimitsSort('no_end_date', 'balance')" style="cursor:pointer;white-space:nowrap;">
+                                    BALANCE <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.no_end_date.column === 'balance' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : '⇅'}</span>
                                 </th>
-                                <th class="filter-header" onclick="setLimitsSort('no_end_date', 'limit');">
-                                    <div class="filter-header-cell" style="cursor:pointer;">LIMIT ${limitsSort.no_end_date.column === 'limit' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : ''}</div>
+                                <th onclick="setLimitsSort('no_end_date', 'limit')" style="cursor:pointer;white-space:nowrap;">
+                                    LIMIT <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.no_end_date.column === 'limit' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : '⇅'}</span>
                                 </th>
                             </tr>
                         </thead>
@@ -700,8 +700,8 @@ function renderLimitsModule(data) {
                                     <div class="filter-header-cell">SALESPERSON <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
                                     ${renderLimitsFilterDropdown('proposals', 'salesperson', allSalespersons)}
                                 </th>
-                                <th class="filter-header" onclick="setLimitsSort('proposals', 'usage');">
-                                    <div class="filter-header-cell" style="cursor:pointer;">USAGE % ${limitsSort.proposals.column === 'usage' ? (limitsSort.proposals.desc ? '▼' : '▲') : ''}</div>
+                                <th onclick="setLimitsSort('proposals', 'usage')" style="cursor:pointer;white-space:nowrap;">
+                                    USAGE % <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.proposals.column === 'usage' ? (limitsSort.proposals.desc ? '▼' : '▲') : '⇅'}</span>
                                 </th>
                                 <th>ACTION</th>
                             </tr>
