@@ -645,14 +645,42 @@ function renderLimitsModule(data) {
                     <table>
                         <thead>
                             <tr>
-                                <th onclick="setLimitsSort('no_end_date', 'customer')" style="cursor:pointer;white-space:nowrap;">
-                                    CUSTOMER <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.no_end_date.column === 'customer' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : '⇅'}</span>
+                                <th>
+                                    <div style="display:flex;flex-direction:column;gap:2px;">
+                                        <div onclick="setLimitsSort('no_end_date', 'customer')" style="cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;">
+                                            CUSTOMER <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.no_end_date.column === 'customer' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : '⇅'}</span>
+                                        </div>
+                                        <input type="text" placeholder="🔍 Filter..." style="background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:0.7rem;color:var(--text-main);width:100%;"
+                                            value="${limitsFilters.no_end_date.customer || ''}"
+                                            onclick="event.stopPropagation()"
+                                            oninput="limitsFilters.no_end_date.customer = this.value.toLowerCase(); clearTimeout(filterDebounceTimer); filterDebounceTimer = setTimeout(renderModule, 150);">
+                                    </div>
                                 </th>
-                                <th onclick="setLimitsSort('no_end_date', 'payment')" style="cursor:pointer;white-space:nowrap;">
-                                    PAYMENT <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.no_end_date.column === 'payment' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : '⇅'}</span>
+                                <th>
+                                    <div style="display:flex;flex-direction:column;gap:2px;">
+                                        <div onclick="setLimitsSort('no_end_date', 'payment')" style="cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;">
+                                            PAYMENT <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.no_end_date.column === 'payment' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : '⇅'}</span>
+                                        </div>
+                                        <select style="background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:2px;font-size:0.7rem;color:var(--text-main);width:100%;"
+                                            onclick="event.stopPropagation()"
+                                            onchange="this.value ? limitsFilters.no_end_date.payment.add(this.value) : limitsFilters.no_end_date.payment.clear(); renderModule();">
+                                            <option value="">All</option>
+                                            ${allPaymentMethods.map(p => `<option value="${p}">${p}</option>`).join('')}
+                                        </select>
+                                    </div>
                                 </th>
-                                <th onclick="setLimitsSort('no_end_date', 'salesperson')" style="cursor:pointer;white-space:nowrap;">
-                                    SALESPERSON <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.no_end_date.column === 'salesperson' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : '⇅'}</span>
+                                <th>
+                                    <div style="display:flex;flex-direction:column;gap:2px;">
+                                        <div onclick="setLimitsSort('no_end_date', 'salesperson')" style="cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;">
+                                            SALESPERSON <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.no_end_date.column === 'salesperson' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : '⇅'}</span>
+                                        </div>
+                                        <select style="background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:2px;font-size:0.7rem;color:var(--text-main);width:100%;"
+                                            onclick="event.stopPropagation()"
+                                            onchange="this.value ? limitsFilters.no_end_date.salesperson.add(this.value) : limitsFilters.no_end_date.salesperson.clear(); renderModule();">
+                                            <option value="">All</option>
+                                            ${allSalespersons.map(s => `<option value="${s}">${s}</option>`).join('')}
+                                        </select>
+                                    </div>
                                 </th>
                                 <th onclick="setLimitsSort('no_end_date', 'balance')" style="cursor:pointer;white-space:nowrap;">
                                     BALANCE <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.no_end_date.column === 'balance' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : '⇅'}</span>
@@ -685,14 +713,42 @@ function renderLimitsModule(data) {
                     <table>
                         <thead>
                             <tr>
-                                <th onclick="setLimitsSort('proposals', 'customer')" style="cursor:pointer;white-space:nowrap;">
-                                    CUSTOMER <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.proposals.column === 'customer' ? (limitsSort.proposals.desc ? '▼' : '▲') : '⇅'}</span>
+                                <th>
+                                    <div style="display:flex;flex-direction:column;gap:2px;">
+                                        <div onclick="setLimitsSort('proposals', 'customer')" style="cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;">
+                                            CUSTOMER <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.proposals.column === 'customer' ? (limitsSort.proposals.desc ? '▼' : '▲') : '⇅'}</span>
+                                        </div>
+                                        <input type="text" placeholder="🔍 Filter..." style="background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:0.7rem;color:var(--text-main);width:100%;"
+                                            value="${limitsFilters.proposals.customer || ''}"
+                                            onclick="event.stopPropagation()"
+                                            oninput="limitsFilters.proposals.customer = this.value.toLowerCase(); clearTimeout(filterDebounceTimer); filterDebounceTimer = setTimeout(renderModule, 150);">
+                                    </div>
                                 </th>
-                                <th onclick="setLimitsSort('proposals', 'payment')" style="cursor:pointer;white-space:nowrap;">
-                                    PAYMENT <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.proposals.column === 'payment' ? (limitsSort.proposals.desc ? '▼' : '▲') : '⇅'}</span>
+                                <th>
+                                    <div style="display:flex;flex-direction:column;gap:2px;">
+                                        <div onclick="setLimitsSort('proposals', 'payment')" style="cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;">
+                                            PAYMENT <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.proposals.column === 'payment' ? (limitsSort.proposals.desc ? '▼' : '▲') : '⇅'}</span>
+                                        </div>
+                                        <select style="background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:2px;font-size:0.7rem;color:var(--text-main);width:100%;"
+                                            onclick="event.stopPropagation()"
+                                            onchange="this.value ? limitsFilters.proposals.payment.add(this.value) : limitsFilters.proposals.payment.clear(); renderModule();">
+                                            <option value="">All</option>
+                                            ${allPaymentMethods.map(p => `<option value="${p}">${p}</option>`).join('')}
+                                        </select>
+                                    </div>
                                 </th>
-                                <th onclick="setLimitsSort('proposals', 'salesperson')" style="cursor:pointer;white-space:nowrap;">
-                                    SALESPERSON <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.proposals.column === 'salesperson' ? (limitsSort.proposals.desc ? '▼' : '▲') : '⇅'}</span>
+                                <th>
+                                    <div style="display:flex;flex-direction:column;gap:2px;">
+                                        <div onclick="setLimitsSort('proposals', 'salesperson')" style="cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;">
+                                            SALESPERSON <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.proposals.column === 'salesperson' ? (limitsSort.proposals.desc ? '▼' : '▲') : '⇅'}</span>
+                                        </div>
+                                        <select style="background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:2px;font-size:0.7rem;color:var(--text-main);width:100%;"
+                                            onclick="event.stopPropagation()"
+                                            onchange="this.value ? limitsFilters.proposals.salesperson.add(this.value) : limitsFilters.proposals.salesperson.clear(); renderModule();">
+                                            <option value="">All</option>
+                                            ${allSalespersons.map(s => `<option value="${s}">${s}</option>`).join('')}
+                                        </select>
+                                    </div>
                                 </th>
                                 <th onclick="setLimitsSort('proposals', 'usage')" style="cursor:pointer;white-space:nowrap;">
                                     USAGE % <span style="color:var(--primary);font-size:0.7rem;">${limitsSort.proposals.column === 'usage' ? (limitsSort.proposals.desc ? '▼' : '▲') : '⇅'}</span>
