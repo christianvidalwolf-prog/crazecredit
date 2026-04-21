@@ -17,6 +17,14 @@ let columnFilters = {
 };
 let activeFilterDropdown = null;
 let filterDebounceTimer = null;
+let limitsFilters = {
+    no_end_date: { customer: '', payment: new Set(), salesperson: new Set() },
+    proposals: { customer: '', payment: new Set(), salesperson: new Set() }
+};
+let limitsSort = {
+    no_end_date: { column: 'balance', desc: true },
+    proposals: { column: 'usage', desc: true }
+};
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -490,17 +498,123 @@ function renderGeneralModule(data) {
 }
 
 // ─── MODULE: Limits ───────────────────────────────────────────────────────────
+function applyLimitsFilters(data, filterKey) {
+    const f = limitsFilters[filterKey];
+    return data.filter(c => {
+        if (f.customer && !(c.Name || '').toLowerCase().includes(f.customer)) return false;
+        if (f.payment.size > 0 && !f.payment.has(c['Zahlungsformcode'])) return false;
+        if (f.salesperson.size > 0 && !f.salesperson.has(c['Salesperson Name'])) return false;
+        return true;
+    });
+}
+
+function sortLimitsData(data, filterKey) {
+    const s = limitsSort[filterKey];
+    return [...data].sort((a, b) => {
+        let valA, valB;
+        if (s.column === 'customer') {
+            valA = (a.Name || '').toLowerCase();
+            valB = (b.Name || '').toLowerCase();
+            return s.desc ? valB.localeCompare(valA) : valA.localeCompare(valB);
+        } else if (s.column === 'payment') {
+            valA = a['Zahlungsformcode'] || '';
+            valB = b['Zahlungsformcode'] || '';
+            return s.desc ? valB.localeCompare(valA) : valA.localeCompare(valB);
+        } else if (s.column === 'salesperson') {
+            valA = a['Salesperson Name'] || '';
+            valB = b['Salesperson Name'] || '';
+            return s.desc ? valB.localeCompare(valA) : valA.localeCompare(valB);
+        } else if (s.column === 'balance') {
+            valA = a['Balance (LCY)'] || 0;
+            valB = b['Balance (LCY)'] || 0;
+            return s.desc ? valB - valA : valA - valB;
+        } else if (s.column === 'limit') {
+            valA = a['Amount agreed'] || 0;
+            valB = b['Amount agreed'] || 0;
+            return s.desc ? valB - valA : valA - valB;
+        } else if (s.column === 'usage') {
+            valA = a['Amount agreed'] ? (a['Balance (LCY)'] || 0) / a['Amount agreed'] : 0;
+            valB = b['Amount agreed'] ? (b['Balance (LCY)'] || 0) / b['Amount agreed'] : 0;
+            return s.desc ? valB - valA : valA - valB;
+        }
+        return 0;
+    });
+}
+
+function setLimitsSort(filterKey, column) {
+    if (limitsSort[filterKey].column === column) {
+        limitsSort[filterKey].desc = !limitsSort[filterKey].desc;
+    } else {
+        limitsSort[filterKey] = { column, desc: true };
+    }
+    renderModule();
+}
+
+function toggleLimitsFilterDropdown(filterKey, column, headerEl) {
+    const dropdown = headerEl.querySelector('.filter-dropdown');
+    if (!dropdown) return;
+    if (dropdown.classList.contains('open')) {
+        dropdown.classList.remove('open');
+        headerEl.classList.remove('active');
+    } else {
+        document.querySelectorAll('.filter-dropdown.open').forEach(d => d.classList.remove('open'));
+        document.querySelectorAll('.filter-header').forEach(h => h.classList.remove('active'));
+        dropdown.classList.add('open');
+        headerEl.classList.add('active');
+    }
+}
+
+function renderLimitsFilterDropdown(filterKey, column, allValues) {
+    const f = limitsFilters[filterKey];
+    const s = limitsSort[filterKey];
+    const isActive = f[column] || (column === 'payment' && f.payment.size > 0) || (column === 'salesperson' && f.salesperson.size > 0);
+    const sortedValues = [...allValues].sort();
+
+    return `
+        <div class="filter-dropdown">
+            <div class="filter-search">
+                <input type="text" placeholder="Search..." value="${f[column] || ''}"
+                    oninput="limitsFilters['${filterKey}']['${column}'] = this.value.toLowerCase(); clearTimeout(filterDebounceTimer); filterDebounceTimer = setTimeout(renderModule, 150);">
+            </div>
+            <div class="filter-actions">
+                <button onclick="limitsFilters['${filterKey}']['${column}'] = ''; limitsFilters['${filterKey}']['${column === 'payment' ? 'payment' : column === 'salesperson' ? 'salesperson' : column}'].clear(); renderModule();">Clear</button>
+            </div>
+            <div class="filter-options">
+                ${sortedValues.map(v => `
+                    <label class="filter-option">
+                        <input type="checkbox"
+                            ${(column === 'payment' ? f.payment : f.salesperson).has(v) ? 'checked' : ''}
+                            onchange="this.checked ? limitsFilters['${filterKey}']['${column}'].add('${v}') : limitsFilters['${filterKey}']['${column}'].delete('${v}'); renderModule();">
+                        ${v}
+                    </label>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
 function renderLimitsModule(data) {
     const today = new Date('2026-04-21');
-    const in60 = new Date(today);
-    in60.setDate(today.getDate() + 60);
 
     const withEndDate = data.filter(c => c['End date'] && c['End date'] !== 'NaT')
         .sort((a, b) => new Date(a['End date']) - new Date(b['End date']));
     
-    const withoutEndDate = data.filter(c => !c['End date'] || c['End date'] === 'NaT' || c['End date'] === null);
+    const withoutEndDateOriginal = data.filter(c => !c['End date'] || c['End date'] === 'NaT' || c['End date'] === null);
+    const withoutEndDateFiltered = sortLimitsData(applyLimitsFilters(withoutEndDateOriginal, 'no_end_date'), 'no_end_date');
 
-    const proposals = data.filter(c => c['Amount agreed'] > 0 && (c['Balance (LCY)'] / c['Amount agreed']) > 0.8);
+    const proposalsOriginal = data.filter(c => c['Amount agreed'] > 0 && (c['Balance (LCY)'] / c['Amount agreed']) > 0.8);
+    const proposalsFiltered = sortLimitsData(applyLimitsFilters(proposalsOriginal, 'proposals'), 'proposals');
+
+    const allPaymentMethods = [...new Set(data.map(c => c['Zahlungsformcode'] || '').filter(Boolean))].sort();
+    const allSalespersons = [...new Set(data.map(c => c['Salesperson Name'] || '').filter(Boolean))].sort();
+
+    const makeSortHeader = (label, filterKey, col, icon) => `
+        <th class="filter-header" onclick="event.stopPropagation(); setLimitsSort('${filterKey}', '${col}');">
+            <div class="filter-header-cell" style="cursor:pointer;">
+                ${label} ${icon}
+            </div>
+        </th>
+    `;
 
     return `
         <div class="module-grid">
@@ -525,13 +639,34 @@ function renderLimitsModule(data) {
             <div class="table-card" style="grid-column:span 1;">
                 <div class="table-header">
                     <h3>No End Date Set · Need Management</h3>
-                    <span class="badge badge-danger">${withoutEndDate.length}</span>
+                    <span class="badge badge-danger">${withoutEndDateFiltered.length}</span>
                 </div>
                 <div class="table-container">
                     <table>
-                        <thead><tr><th>CUSTOMER</th><th>PAYMENT</th><th>SALESPERSON</th><th>BALANCE</th><th>LIMIT</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th class="filter-header" onclick="toggleLimitsFilterDropdown('no_end_date', 'customer', this)">
+                                    <div class="filter-header-cell">CUSTOMER <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
+                                    ${renderLimitsFilterDropdown('no_end_date', 'customer', [...new Set(withoutEndDateOriginal.map(c => c.Name || '').filter(Boolean))])}
+                                </th>
+                                <th class="filter-header" onclick="toggleLimitsFilterDropdown('no_end_date', 'payment', this)">
+                                    <div class="filter-header-cell">PAYMENT <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
+                                    ${renderLimitsFilterDropdown('no_end_date', 'payment', allPaymentMethods)}
+                                </th>
+                                <th class="filter-header" onclick="toggleLimitsFilterDropdown('no_end_date', 'salesperson', this)">
+                                    <div class="filter-header-cell">SALESPERSON <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
+                                    ${renderLimitsFilterDropdown('no_end_date', 'salesperson', allSalespersons)}
+                                </th>
+                                <th class="filter-header" onclick="setLimitsSort('no_end_date', 'balance');">
+                                    <div class="filter-header-cell" style="cursor:pointer;">BALANCE ${limitsSort.no_end_date.column === 'balance' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : ''}</div>
+                                </th>
+                                <th class="filter-header" onclick="setLimitsSort('no_end_date', 'limit');">
+                                    <div class="filter-header-cell" style="cursor:pointer;">LIMIT ${limitsSort.no_end_date.column === 'limit' ? (limitsSort.no_end_date.desc ? '▼' : '▲') : ''}</div>
+                                </th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            ${withoutEndDate.slice(0, 20).map(c => `
+                            ${withoutEndDateFiltered.slice(0, 30).map(c => `
                                 <tr>
                                     <td>${c.Name}</td>
                                     <td>${paymentBadge(c['Zahlungsformcode'])}</td>
@@ -545,12 +680,34 @@ function renderLimitsModule(data) {
                 </div>
             </div>
             <div class="table-card" style="grid-column:span 1;">
-                <div class="table-header"><h3>Expansion Proposals (&gt;80% usage)</h3></div>
+                <div class="table-header">
+                    <h3>Expansion Proposals (&gt;80% usage)</h3>
+                    <span class="badge badge-warning">${proposalsFiltered.length}</span>
+                </div>
                 <div class="table-container">
                     <table>
-                        <thead><tr><th>CUSTOMER</th><th>PAYMENT</th><th>SALESPERSON</th><th>USAGE %</th><th>ACTION</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th class="filter-header" onclick="toggleLimitsFilterDropdown('proposals', 'customer', this)">
+                                    <div class="filter-header-cell">CUSTOMER <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
+                                    ${renderLimitsFilterDropdown('proposals', 'customer', [...new Set(proposalsOriginal.map(c => c.Name || '').filter(Boolean))])}
+                                </th>
+                                <th class="filter-header" onclick="toggleLimitsFilterDropdown('proposals', 'payment', this)">
+                                    <div class="filter-header-cell">PAYMENT <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
+                                    ${renderLimitsFilterDropdown('proposals', 'payment', allPaymentMethods)}
+                                </th>
+                                <th class="filter-header" onclick="toggleLimitsFilterDropdown('proposals', 'salesperson', this)">
+                                    <div class="filter-header-cell">SALESPERSON <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
+                                    ${renderLimitsFilterDropdown('proposals', 'salesperson', allSalespersons)}
+                                </th>
+                                <th class="filter-header" onclick="setLimitsSort('proposals', 'usage');">
+                                    <div class="filter-header-cell" style="cursor:pointer;">USAGE % ${limitsSort.proposals.column === 'usage' ? (limitsSort.proposals.desc ? '▼' : '▲') : ''}</div>
+                                </th>
+                                <th>ACTION</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            ${proposals.map(c => `
+                            ${proposalsFiltered.map(c => `
                                 <tr>
                                     <td>${c.Name}</td>
                                     <td>${paymentBadge(c['Zahlungsformcode'])}</td>
