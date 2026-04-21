@@ -653,7 +653,8 @@ function renderLimitsModule(data) {
                                         <input type="text" placeholder="🔍 Filter..." style="background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:0.7rem;color:var(--text-main);width:100%;"
                                             value="${limitsFilters.no_end_date.customer || ''}"
                                             onclick="event.stopPropagation()"
-                                            oninput="limitsFilters.no_end_date.customer = this.value.toLowerCase(); clearTimeout(filterDebounceTimer); filterDebounceTimer = setTimeout(renderModule, 150);">
+                                            oninput="limitsFilters.no_end_date.customer = this.value.toLowerCase();"
+                                            onkeydown="if(event.key === 'Enter') { renderModule(); }">
                                     </div>
                                 </th>
                                 <th>
@@ -721,7 +722,8 @@ function renderLimitsModule(data) {
                                         <input type="text" placeholder="🔍 Filter..." style="background:var(--bg-deep);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:0.7rem;color:var(--text-main);width:100%;"
                                             value="${limitsFilters.proposals.customer || ''}"
                                             onclick="event.stopPropagation()"
-                                            oninput="limitsFilters.proposals.customer = this.value.toLowerCase(); clearTimeout(filterDebounceTimer); filterDebounceTimer = setTimeout(renderModule, 150);">
+                                            oninput="limitsFilters.proposals.customer = this.value.toLowerCase();"
+                                            onkeydown="if(event.key === 'Enter') { renderModule(); }">
                                     </div>
                                 </th>
                                 <th>
