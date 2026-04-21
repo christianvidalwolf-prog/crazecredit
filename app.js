@@ -56,11 +56,21 @@ function toggleFilterDropdown(column, headerEl) {
 }
 
 function updateFilterSearch(column, value) {
+    // Only update the in-memory search text; do NOT re-render yet.
+    // The user confirms by pressing Enter or clicking Apply.
     columnFilters[column].search = value.toLowerCase();
-    clearTimeout(filterDebounceTimer);
-    filterDebounceTimer = setTimeout(() => {
-        renderModule();
-    }, 150);
+    // Filter the visible checkbox options without closing the dropdown.
+    const dd = document.getElementById('filter-dd-' + column);
+    if (!dd) return;
+    dd.querySelectorAll('.filter-option').forEach(label => {
+        const text = label.textContent.trim().toLowerCase();
+        label.style.display = !value || text.includes(value.toLowerCase()) ? '' : 'none';
+    });
+}
+
+function applyFilterSearch(e) {
+    if (e && e.key && e.key !== 'Enter') return;
+    renderModule();
 }
 
 function updateFilterCheckbox(column, value, checked) {
@@ -110,8 +120,9 @@ function renderFilterDropdownHTML(column, allValues, _hasSearch) {
     return `
         <div class="filter-dropdown" id="filter-dd-${column}">
             <div class="filter-search">
-                <input type="text" placeholder="Search..." value="${searchVal}"
+                <input type="text" placeholder="Search... (Enter to apply)" value="${searchVal}"
                     oninput="updateFilterSearch('${column}', this.value)"
+                    onkeydown="applyFilterSearch(event)"
                     onclick="event.stopPropagation()">
             </div>
             ${selectAllBtn}
