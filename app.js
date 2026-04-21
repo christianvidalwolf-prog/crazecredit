@@ -16,6 +16,7 @@ let columnFilters = {
     invoices: { values: new Set() }
 };
 let activeFilterDropdown = null;
+let filterDebounceTimer = null;
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -56,7 +57,10 @@ function toggleFilterDropdown(column, headerEl) {
 
 function updateFilterSearch(column, value) {
     columnFilters[column].search = value.toLowerCase();
-    renderModule();
+    clearTimeout(filterDebounceTimer);
+    filterDebounceTimer = setTimeout(() => {
+        renderModule();
+    }, 150);
 }
 
 function updateFilterCheckbox(column, value, checked) {
