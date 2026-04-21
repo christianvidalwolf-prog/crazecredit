@@ -453,45 +453,30 @@ function renderGeneralModule(data) {
                 <div class="table-container">
                     <table>
                         <thead><tr>
-                            <th class="filter-header" onclick="toggleFilterDropdown('customer', this.parentElement)">
+                            <th class="filter-header" onclick="toggleFilterDropdown('customer', this)">
                                 <div class="filter-header-cell">
                                     CUSTOMER
                                     <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i>
                                 </div>
                                 ${renderFilterDropdownHTML('customer', [...new Set(data.map(c => c['Name'] || '').filter(Boolean))].sort(), true)}
                             </th>
-                            <th class="filter-header" onclick="toggleFilterDropdown('balance', this.parentElement)">
-                                <div class="filter-header-cell">
-                                    BALANCE
-                                    <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i>
-                                </div>
-                            </th>
-                            <th class="filter-header" onclick="toggleFilterDropdown('real_overdue', this.parentElement)">
-                                <div class="filter-header-cell">
-                                    REAL OVERDUE ▼
-                                    <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i>
-                                </div>
-                            </th>
-                            <th class="filter-header" onclick="toggleFilterDropdown('payment_method', this.parentElement)">
+                            <th>BALANCE</th>
+                            <th>REAL OVERDUE ▼</th>
+                            <th class="filter-header" onclick="toggleFilterDropdown('payment_method', this)">
                                 <div class="filter-header-cell">
                                     PAYMENT METHOD
                                     <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i>
                                 </div>
                                 ${renderFilterDropdownHTML('payment_method', allPaymentMethods, false)}
                             </th>
-                            <th class="filter-header" onclick="toggleFilterDropdown('salesperson', this.parentElement)">
+                            <th class="filter-header" onclick="toggleFilterDropdown('salesperson', this)">
                                 <div class="filter-header-cell">
                                     SALESPERSON
                                     <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i>
                                 </div>
                                 ${renderFilterDropdownHTML('salesperson', allSalespersons, false)}
                             </th>
-                            <th class="filter-header" onclick="toggleFilterDropdown('invoices', this.parentElement)">
-                                <div class="filter-header-cell">
-                                    INVOICES
-                                    <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i>
-                                </div>
-                            </th>
+                            <th>INVOICES</th>
                         </tr></thead>
                         <tbody>${rows}</tbody>
                     </table>

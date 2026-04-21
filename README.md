@@ -1,4 +1,4 @@
-# Craze Credit - Financial & Risk Dashboard
+# Craze Credit - Financial & Risk Dashboard (Live)
 
 This project is an expert financial and risk management application designed to consolidate data from multiple ERP sources (Business Central / Navision) and risk providers (Risk Portfolio).
 
