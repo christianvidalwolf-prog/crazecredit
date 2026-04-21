@@ -92,25 +92,14 @@ function hasActiveFilter(column) {
     return false;
 }
 
-function renderFilterDropdownHTML(column, allValues, hasSearch) {
-    const options = allValues.filter(v => {
-        if (!columnFilters[column].search) return true;
-        return v.toLowerCase().includes(columnFilters[column].search);
-    });
-    const allSelected = columnFilters[column].values.size === allValues.length;
-    const noneSelected = columnFilters[column].values.size === 0;
+function renderFilterDropdownHTML(column, allValues, _hasSearch) {
+    const searchVal = columnFilters[column].search || '';
+    const options = allValues.filter(v =>
+        !searchVal || v.toLowerCase().includes(searchVal)
+    );
+    const allSelected = allValues.length > 0 && columnFilters[column].values.size === allValues.length;
 
-    let searchHTML = '';
-    if (hasSearch) {
-        searchHTML = `
-            <div class="filter-search">
-                <input type="text" placeholder="Search..." value="${columnFilters[column].search}"
-                    oninput="updateFilterSearch('${column}', this.value)">
-            </div>
-        `;
-    }
-
-    const selectAllBtn = !hasSearch && options.length > 1 ? `
+    const selectAllBtn = options.length > 1 ? `
         <div class="filter-actions">
             <button onclick="toggleSelectAll('${column}', ${JSON.stringify(allValues)})">
                 ${allSelected ? 'Deselect All' : 'Select All'}
@@ -120,7 +109,11 @@ function renderFilterDropdownHTML(column, allValues, hasSearch) {
 
     return `
         <div class="filter-dropdown" id="filter-dd-${column}">
-            ${searchHTML}
+            <div class="filter-search">
+                <input type="text" placeholder="Search..." value="${searchVal}"
+                    oninput="updateFilterSearch('${column}', this.value)"
+                    onclick="event.stopPropagation()">
+            </div>
             ${selectAllBtn}
             <div class="filter-options">
                 ${options.map(v => `
@@ -172,8 +165,16 @@ function applyColumnFilters(data) {
             const val = c['real_overdue_amount'] || 0;
             if (!columnFilters.real_overdue.values.has(val)) return false;
         }
+        if (columnFilters.payment_method.search) {
+            const val = (c['Zahlungsformcode'] || '').toLowerCase();
+            if (!val.includes(columnFilters.payment_method.search)) return false;
+        }
         if (columnFilters.payment_method.values.size > 0) {
             if (!columnFilters.payment_method.values.has(c['Zahlungsformcode'])) return false;
+        }
+        if (columnFilters.salesperson.search) {
+            const val = (c['Salesperson Name'] || '').toLowerCase();
+            if (!val.includes(columnFilters.salesperson.search)) return false;
         }
         if (columnFilters.salesperson.values.size > 0) {
             if (!columnFilters.salesperson.values.has(c['Salesperson Name'])) return false;
