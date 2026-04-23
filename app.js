@@ -13,7 +13,9 @@ let columnFilters = {
     real_overdue: { search: '', values: new Set() },
     payment_method: { search: '', values: new Set() },
     salesperson: { search: '', values: new Set() },
-    invoices: { values: new Set() }
+    invoices: { values: new Set() },
+    status: { values: new Set() },
+    max_days: { values: new Set() }
 };
 let activeFilterDropdown = null;
 let filterDebounceTimer = null;
@@ -144,8 +146,8 @@ function renderFilterDropdownHTML(column, allValues, _hasSearch) {
                 ${options.map(v => `
                     <label class="filter-option">
                         <input type="checkbox"
-                            ${columnFilters[column].values.has(v) ? 'checked' : ''}
-                            onchange="updateFilterCheckbox('${column}', '${v.replace(/'/g, "\\'")}', this.checked)">
+                            ${columnFilters[column].values.has(String(v)) ? 'checked' : ''}
+                            onchange="updateFilterCheckbox('${column}', '${String(v).replace(/'/g, "\\'")}', this.checked)">
                         ${v}
                     </label>
                 `).join('')}
@@ -159,18 +161,57 @@ function renderFilterDropdownHTML(column, allValues, _hasSearch) {
 
 function getUniqueValues(data, column, transform) {
     const vals = data.map(c => {
-        if (column === 'customer') return c['Name'] || '';
-        if (column === 'balance') return c['Balance (LCY)'] || 0;
-        if (column === 'real_overdue') return c['real_overdue_amount'] || 0;
-        if (column === 'payment_method') return c['Zahlungsformcode'] || '';
-        if (column === 'salesperson') return c['Salesperson Name'] || '';
-        if (column === 'invoices') return c['overdue_invoice_count'] || 0;
-        return '';
+    if (column === 'customer') return c['Name'] || c.name || '';
+    if (column === 'balance') return c['Balance (LCY)'] || 0;
+    if (column === 'real_overdue') return c['real_overdue_amount'] || c.total || 0;
+    if (column === 'payment_method') return c['Zahlungsformcode'] || c.payment || '';
+    if (column === 'salesperson') return c['Salesperson Name'] || c.salesperson || '';
+    if (column === 'invoices') return c['overdue_invoice_count'] || (c.invoices ? c.invoices.length : 0) || 0;
+    if (column === 'status') return c.status || '';
+    if (column === 'max_days') return c.max_days || 0;
+    return '';
+});
+if (transform === 'badge') {
+    return [...new Set(vals.filter(v => v !== null && v !== undefined && v !== ''))].sort();
+}
+return [...new Set(vals)].sort((a, b) => {
+    if (typeof a === 'number' && typeof b === 'number') return b - a;
+    return String(a).localeCompare(String(b));
+});
+}
+
+
+
+function applyCollectionsFilters(data) {
+    return data.filter(c => {
+        if (columnFilters.customer.search) {
+            const name = (c.name || '').toLowerCase();
+            if (!name.includes(columnFilters.customer.search)) return false;
+        }
+        if (columnFilters.customer.values.size > 0) {
+            if (!columnFilters.customer.values.has(String(c.name))) return false;
+        }
+        if (columnFilters.payment_method.values.size > 0) {
+            if (!columnFilters.payment_method.values.has(String(c.payment))) return false;
+        }
+        if (columnFilters.salesperson.values.size > 0) {
+            if (!columnFilters.salesperson.values.has(String(c.salesperson))) return false;
+        }
+        if (columnFilters.real_overdue.values.size > 0) {
+            if (!columnFilters.real_overdue.values.has(String(c.total))) return false;
+        }
+        if (columnFilters.invoices.values.size > 0) {
+            if (!columnFilters.invoices.values.has(String(c.invoices.length))) return false;
+        }
+        if (columnFilters.status.values.size > 0) {
+            const s = c.status || 'none';
+            if (!columnFilters.status.values.has(String(s))) return false;
+        }
+        if (columnFilters.max_days.values.size > 0) {
+            if (!columnFilters.max_days.values.has(String(c.max_days))) return false;
+        }
+        return true;
     });
-    if (transform === 'badge') {
-        return [...new Set(vals.filter(Boolean))].sort();
-    }
-    return [...new Set(vals)];
 }
 
 function applyColumnFilters(data) {
@@ -419,6 +460,12 @@ function updateMgmtNotes(id, val) {
 }
 function incrementReminder(id) {
     getMgmt(id).reminders = (getMgmt(id).reminders || 0) + 1;
+    saveMgmt();
+    renderModule();
+}
+function decrementReminder(id) {
+    const m = getMgmt(id);
+    m.reminders = Math.max(0, (m.reminders || 0) - 1);
     saveMgmt();
     renderModule();
 }
@@ -1059,7 +1106,6 @@ function renderCommercialModule(data) {
     `;
 }
 
-// ─── MODULE: Collections / Cobros ────────────────────────────────────────────
 function renderCobrosModule(filtered) {
     const invoices = getFilteredOverdueInvoices(filtered);
 
@@ -1078,10 +1124,17 @@ function renderCobrosModule(filtered) {
         byCustomer[key].invoices.push(inv);
     });
 
-    const customers = Object.entries(byCustomer)
-        .sort((a, b) => b[1].total - a[1].total);
+    const customerList = Object.entries(byCustomer).map(([cid, info]) => ({
+        cid,
+        ...info,
+        status: getMgmt(cid).status || 'none',
+        max_days: info.invoices.length ? Math.max(...info.invoices.map(i => i['Days Overdue'])) : 0
+    })).sort((a, b) => b.total - a.total);
 
-    const rows = customers.map(([cid, info]) => {
+    const finalData = applyCollectionsFilters(customerList);
+
+    const rows = finalData.map((info) => {
+        const cid = info.cid;
         const expanded = expandedRows.has(cid);
         const m = getMgmt(cid);
 
@@ -1119,8 +1172,9 @@ function renderCobrosModule(filtered) {
                                     <option value="dispute" ${m.status === 'dispute' ? 'selected' : ''}>In dispute</option>
                                 </select>
                                 <label style="margin-left:1rem;">Reminders sent:</label>
+                                <button class="btn-counter-adj" onclick="decrementReminder('${cid}')" ${(m.reminders || 0) === 0 ? 'disabled' : ''}>−</button>
                                 <span class="reminder-counter">${m.reminders || 0}</span>
-                                <button class="btn-action" onclick="incrementReminder('${cid}')">+1 Reminder</button>
+                                <button class="btn-counter-adj" onclick="incrementReminder('${cid}')">+</button>
                             </div>
                             <div class="mgmt-row">
                                 <label>Response received:</label>
@@ -1159,7 +1213,7 @@ function renderCobrosModule(filtered) {
                 <td class="text-danger"><strong>${formatCurrency(info.total)}</strong></td>
                 <td>${info.invoices.length}</td>
                 <td>${statusBadge}${reminderBadge}</td>
-                <td>${info.invoices[0] ? `${Math.max(...info.invoices.map(i => i['Days Overdue']))}d` : '—'}</td>
+                <td>${info.max_days}d</td>
             </tr>
             ${detailPanel}
         `;
@@ -1170,13 +1224,39 @@ function renderCobrosModule(filtered) {
             <div class="table-card">
                 <div class="table-header">
                     <h3>Collections · Overdue by Client (excl. confirmed payments)</h3>
-                    <span class="badge badge-danger">${customers.length} clients · ${invoices.length} invoices</span>
+                    <span class="badge badge-danger">${finalData.length} clients · ${invoices.length} invoices</span>
                 </div>
                 <div class="table-container">
                     <table>
                         <thead><tr>
-                            <th>CUSTOMER</th><th>PAYMENT METHOD</th><th>SALESPERSON</th>
-                            <th>TOTAL OVERDUE</th><th>INVOICES</th><th>STATUS</th><th>MAX DAYS</th>
+                            <th class="filter-header" onclick="toggleFilterDropdown('customer', this)">
+                                <div class="filter-header-cell">CUSTOMER <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
+                                ${renderFilterDropdownHTML('customer', getUniqueValues(customerList, 'customer'), true)}
+                            </th>
+                            <th class="filter-header" onclick="toggleFilterDropdown('payment_method', this)">
+                                <div class="filter-header-cell">PAYMENT METHOD <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
+                                ${renderFilterDropdownHTML('payment_method', getUniqueValues(customerList, 'payment_method'), false)}
+                            </th>
+                            <th class="filter-header" onclick="toggleFilterDropdown('salesperson', this)">
+                                <div class="filter-header-cell">SALESPERSON <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
+                                ${renderFilterDropdownHTML('salesperson', getUniqueValues(customerList, 'salesperson'), false)}
+                            </th>
+                            <th class="filter-header" onclick="toggleFilterDropdown('real_overdue', this)">
+                                <div class="filter-header-cell">TOTAL OVERDUE <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
+                                ${renderFilterDropdownHTML('real_overdue', getUniqueValues(customerList, 'real_overdue'), false)}
+                            </th>
+                            <th class="filter-header" onclick="toggleFilterDropdown('invoices', this)">
+                                <div class="filter-header-cell">INVOICES <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
+                                ${renderFilterDropdownHTML('invoices', getUniqueValues(customerList, 'invoices'), false)}
+                            </th>
+                            <th class="filter-header" onclick="toggleFilterDropdown('status', this)">
+                                <div class="filter-header-cell">STATUS <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
+                                ${renderFilterDropdownHTML('status', getUniqueValues(customerList, 'status'), false)}
+                            </th>
+                            <th class="filter-header" onclick="toggleFilterDropdown('max_days', this)">
+                                <div class="filter-header-cell">MAX DAYS <i data-lucide="filter" class="filter-icon" style="width:12px;height:12px;"></i></div>
+                                ${renderFilterDropdownHTML('max_days', getUniqueValues(customerList, 'max_days'), false)}
+                            </th>
                         </tr></thead>
                         <tbody>${rows}</tbody>
                     </table>

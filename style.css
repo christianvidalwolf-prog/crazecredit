@@ -339,6 +339,25 @@ tr:hover td { background: var(--bg-card-hover); }
 
 .btn-action:hover { opacity: 0.85; }
 
+.btn-counter-adj {
+    background: var(--bg-card-hover);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-counter-adj:hover:not(:disabled) { background: var(--primary); color: white; }
+.btn-counter-adj:disabled { opacity: 0.3; cursor: not-allowed; }
+
 /* Alert items (Limits module) */
 .alert-item {
     padding: 1rem;
